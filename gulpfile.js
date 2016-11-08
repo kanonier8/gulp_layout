@@ -3,6 +3,8 @@
 const gulp = require('gulp');
 const stylus = require('gulp-stylus');
 const pug = require('gulp-pug');
+const plumber = require('gulp-plumber');
+const base64 = require('gulp-base64');
 const clean = require('gulp-clean');
 const sourcemaps = require('gulp-sourcemaps');
 const autoprefixer = require('autoprefixer-stylus');
@@ -11,14 +13,17 @@ const browserSync = require('browser-sync').create();
 gulp.task('styles', function() {
 	return gulp.src('source/stylus/index.styl')
 		.pipe(sourcemaps.init())
+		.pipe(plumber())
 		.pipe( stylus({
 			use: [ autoprefixer() ]
 		}) )
+		.pipe(base64({maxImageSize: 8*1024}))
 		.pipe( gulp.dest('dist/css') );
 });
 
 gulp.task('pug', function() {
 	return gulp.src('source/pug/*.pug')
+		.pipe(plumber())
 		.pipe( pug({pretty: true}) )
 		.pipe( gulp.dest('dist/') )
 });
@@ -28,19 +33,14 @@ gulp.task('clean', function() {
 		.pipe( clean() )
 });
 
-gulp.task('fonts', function() {
-	return gulp.src('source/fonts/**/*.*')
-		.pipe( gulp.dest('dist/fonts/') )
-});
-
-gulp.task('image', function() {
-	return gulp.src('source/img/**/*.*')
-		.pipe( gulp.dest('dist/img/') )
+gulp.task('assets', function() {
+	return gulp.src('source/assets/**/*.*')
+		.pipe( gulp.dest('dist/assets/') )
 });
 
 gulp.task('build', gulp.series(
 		'clean',
-		gulp.parallel('image', 'fonts'),
+		'assets',
 		gulp.parallel('styles', 'pug')
 	)
 );
@@ -49,8 +49,7 @@ gulp.task('build', gulp.series(
 gulp.task('watch', function() {
 	gulp.watch('source/stylus/**/*.styl', gulp.series('styles'));
 	gulp.watch('source/pug/**/*.pug', gulp.series('pug'));
-	gulp.watch('source/img/**/*.*', gulp.series('image'));
-	gulp.watch('source/fonts/**/*.*.pug', gulp.series('fonts'));
+	gulp.watch('source/assets/**/*.*', gulp.series('assets'));
 })
 
 gulp.task('serve', function(callback) {
